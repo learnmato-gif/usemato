@@ -334,7 +334,7 @@ export default function MatoLanding() {
             >{item.label}</a>
           ))}
         </div>
-        <span style={{ fontSize: 11, color: "#ddd" }}>&copy; 2026 Mato, Inc.</span>
+        <span style={{ fontSize: 11, color: "#ddd" }}>&copy; 2026 Mato</span>
       </footer>
 
       {/* GLOBAL STYLES */}
