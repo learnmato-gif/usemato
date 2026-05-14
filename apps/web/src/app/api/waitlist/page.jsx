@@ -84,7 +84,3 @@ export async function action({ request }) {
     });
   }
 }
-
-export default function WaitlistApiRoute() {
-  return null;
-}

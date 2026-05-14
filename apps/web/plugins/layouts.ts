@@ -49,7 +49,8 @@ export function layoutWrapperPlugin(userOpts: HierarchicalLayoutOptions = {}): P
     async transform(code, id) {
       if (
         opts.pagePattern.test(id) &&
-        !id.includes(NO_LAYOUT_QUERY) // avoid wrapping the already wrapped page
+        !id.includes(NO_LAYOUT_QUERY) &&
+        !id.includes('/api/')
       ) {
         return buildWrapper.call(this, id);
       }

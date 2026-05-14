@@ -73,13 +73,16 @@ export default function MatoLanding() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: trimmed }),
       });
-      const data = await res.json();
-      if (res.ok) {
+      let data;
+      try { data = await res.json(); } catch { data = null; }
+      if (data && !res.ok) {
+        setFormError(data.error || "Something went wrong. Please try again.");
+      } else if (data?.error) {
+        setFormError(data.error);
+      } else {
         setSubmitted(true);
         setEmail("");
         setTimeout(() => setSubmitted(false), 6000);
-      } else {
-        setFormError(data.error || "Something went wrong. Please try again.");
       }
     } catch {
       setFormError("Something went wrong. Please try again.");
