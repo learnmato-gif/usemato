@@ -18,6 +18,7 @@ import NeonAdapter from './adapter';
 import { getHTMLForErrorPage } from './get-html-for-error-page';
 import { isAuthAction } from './is-auth-action';
 import { API_BASENAME, api } from './route-builder';
+import { POST as waitlistPOST } from '../src/app/api/waitlist/route.js';
 neonConfig.webSocketConstructor = ws;
 
 const als = new AsyncLocalStorage<{ requestId: string }>();
@@ -290,6 +291,9 @@ app.use('/api/auth/*', async (c, next) => {
     return authHandler()(c, next);
   }
   return next();
+});
+app.post('/api/waitlist', async (c) => {
+  return await waitlistPOST(c.req.raw, { params: {} });
 });
 app.route(API_BASENAME, api);
 
