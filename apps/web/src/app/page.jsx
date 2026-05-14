@@ -320,8 +320,8 @@ export default function MatoLanding() {
         </div>
         <div style={{ display: "flex", gap: 32 }}>
           {[
-            { label: "Privacy", href: "#" },
-            { label: "Terms", href: "#" },
+            { label: "Privacy", href: "/privacy" },
+            { label: "Terms", href: "/terms" },
             { label: "Instagram", href: "https://www.instagram.com/use.mato/" },
             { label: "LinkedIn", href: "https://www.linkedin.com/company/mato-linkedin/" },
           ].map(item => (
