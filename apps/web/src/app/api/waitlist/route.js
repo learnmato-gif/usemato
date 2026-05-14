@@ -82,7 +82,7 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('Waitlist error:', err);
-    return new Response(JSON.stringify({ error: 'Something went wrong. Please try again.' }), {
+    return new Response(JSON.stringify({ error: 'Something went wrong. Please try again.', detail: err?.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
