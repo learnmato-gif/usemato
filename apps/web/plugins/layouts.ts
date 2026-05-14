@@ -135,6 +135,8 @@ export function layoutWrapperPlugin(userOpts: HierarchicalLayoutOptions = {}): P
 
     // import the actual page with a flag to skip re-wrapping
     imports.push(`import Page from ${JSON.stringify(pagePath + NO_LAYOUT_QUERY)};`);
+    // re-export named exports (action, loader, meta, headers, etc.) from the original page
+    imports.push(`export * from ${JSON.stringify(pagePath + NO_LAYOUT_QUERY)};`);
 
     if (routeParams.length > 0) {
       imports.push(
