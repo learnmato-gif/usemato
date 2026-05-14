@@ -94,7 +94,7 @@ export default function MatoLanding() {
   useEffect(() => {
     const steps = [];
     for (const c of "Finding leads") steps.push({ type: "add", char: c, delay: 65 });
-    for (const c of "...") steps.push({ type: "add", char: c, delay: 400 });
+    for (const c of "...") steps.push({ type: "add", char: c, delay: 150 });
     steps.push({ type: "pause", delay: 800 });
     for (let i = 0; i < 3; i++) steps.push({ type: "delete", delay: 80 });
     steps.push({ type: "pause", delay: 300 });
