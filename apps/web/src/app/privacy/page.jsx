@@ -40,7 +40,11 @@ export default function PrivacyPage() {
             body: "We may update this Privacy Policy from time to time. We will notify you of significant changes by email or by posting a notice on our site. Continued use of Mato after changes constitutes acceptance of the updated policy.",
           },
           {
-            title: "9. Contact",
+            title: "9. Governing Law",
+            body: "This Privacy Policy is governed by the laws of India, including the Information Technology Act, 2000 and the Digital Personal Data Protection Act, 2023. Any disputes will be subject to the exclusive jurisdiction of courts in India.",
+          },
+          {
+            title: "10. Contact",
             body: "Questions about this policy? Email us at privacy@usemato.com.",
           },
         ].map(({ title, body }) => (

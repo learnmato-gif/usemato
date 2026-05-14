@@ -41,7 +41,7 @@ export default function TermsPage() {
           },
           {
             title: "9. Governing Law",
-            body: "These Terms are governed by the laws of the State of Delaware, without regard to conflict of law principles.",
+            body: "These Terms are governed by the laws of India. Any disputes arising from these Terms will be subject to the exclusive jurisdiction of the courts located in India.",
           },
           {
             title: "10. Contact",
