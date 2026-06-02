@@ -9,6 +9,9 @@
     background-color: #000;
     color: #fff;
   }
+  #root {
+    background-color: transparent;
+  }
 
   /* ── Hot-pink beam background — on body so no fixed element, no mobile jerk ── */
   body {

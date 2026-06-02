@@ -630,7 +630,7 @@ export default function MatoLanding() {
 
   return (
     <div style={{
-      background: "#000",
+      background: "transparent",
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       color: "#fff",
       overflowX: "hidden",
