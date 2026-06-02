@@ -271,10 +271,6 @@ function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
       style={{
         position: fixed ? "fixed" : "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
         background: "#000", overflow: "hidden",
-        transform: "translateZ(0)",        // GPU layer — kills iOS scroll jitter
-        willChange: "transform",
-        backfaceVisibility: "hidden",
-        WebkitBackfaceVisibility: "hidden",
       }}
     >
       {/* 1. Deep atmospheric base tint */}
@@ -288,36 +284,36 @@ function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
         filter: "blur(80px)",
       }} />
 
-      {/* 2. Far beams — vw-based widths so they stay proportional on any screen */}
+      {/* 2. Far beams */}
       <div className="beams-far" style={{
         position: "absolute", inset: "-25%",
         background:
           `repeating-linear-gradient(-58deg,` +
-          ` transparent 0,` +
-          ` transparent 9vw,` +
-          ` rgba(${p.far},0.40) 12vw,` +
-          ` rgba(${p.far},0.40) 17vw,` +
-          ` transparent 20vw,` +
-          ` transparent 30vw)`,
-        filter: "blur(2.4vw)",
+          ` transparent 0px,` +
+          ` transparent 130px,` +
+          ` rgba(${p.far},0.40) 175px,` +
+          ` rgba(${p.far},0.40) 250px,` +
+          ` transparent 300px,` +
+          ` transparent 430px)`,
+        filter: "blur(34px)",
         WebkitMaskImage:
           "radial-gradient(ellipse 80% 70% at 50% 23%, #000 0%, #000 26%, transparent 82%)",
         maskImage:
           "radial-gradient(ellipse 80% 70% at 50% 23%, #000 0%, #000 26%, transparent 82%)",
       }} />
 
-      {/* 3. Near beams — tighter, sharper, vw-scaled */}
+      {/* 3. Near beams */}
       <div className="beams-near" style={{
         position: "absolute", inset: "-15%",
         background:
           `repeating-linear-gradient(-52deg,` +
-          ` transparent 0,` +
-          ` transparent 5vw,` +
-          ` rgba(${p.near},0.60) 7.5vw,` +
-          ` rgba(${p.near},0.60) 10.5vw,` +
-          ` transparent 13vw,` +
-          ` transparent 19vw)`,
-        filter: "blur(1.1vw)",
+          ` transparent 0px,` +
+          ` transparent 75px,` +
+          ` rgba(${p.near},0.60) 105px,` +
+          ` rgba(${p.near},0.60) 150px,` +
+          ` transparent 185px,` +
+          ` transparent 270px)`,
+        filter: "blur(16px)",
         WebkitMaskImage:
           "radial-gradient(ellipse 72% 60% at 50% 22%, #000 0%, #000 32%, transparent 80%)",
         maskImage:
@@ -361,24 +357,6 @@ function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
           " rgba(0,0,0,0.85) 100%)",
       }} />
 
-      <style>{`
-        @media (max-width: 768px) {
-          .beams-far { background-image:
-            repeating-linear-gradient(-58deg,
-              transparent 0, transparent 18vw,
-              rgba(220,40,140,0.40) 24vw,
-              rgba(220,40,140,0.40) 34vw,
-              transparent 40vw, transparent 56vw) !important;
-          }
-          .beams-near { background-image:
-            repeating-linear-gradient(-52deg,
-              transparent 0, transparent 14vw,
-              rgba(255,70,180,0.60) 19vw,
-              rgba(255,70,180,0.60) 26vw,
-              transparent 31vw, transparent 44vw) !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
@@ -630,13 +608,14 @@ export default function MatoLanding() {
 
   return (
     <div style={{
-      background: "transparent",
+      background: "#000",
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       color: "#fff",
       overflowX: "hidden",
       minHeight: "100vh",
     }}>
 
+      <BeamBackground palette={PINK_PALETTE} />
       <ScrollProgress />
 
       {/* ─── NAV ─── */}
