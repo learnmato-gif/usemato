@@ -271,6 +271,10 @@ function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
       style={{
         position: fixed ? "fixed" : "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
         background: "#000", overflow: "hidden",
+        transform: "translateZ(0)",        // GPU layer — kills iOS scroll jitter
+        willChange: "transform",
+        backfaceVisibility: "hidden",
+        WebkitBackfaceVisibility: "hidden",
       }}
     >
       {/* 1. Deep atmospheric base tint */}
@@ -380,6 +384,22 @@ function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
         .ember      { animation: emberDrift 14s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) {
           .beams-far, .beams-near, .bloom, .ember { animation: none; }
+        }
+        @media (max-width: 768px) {
+          .beams-far { background-image:
+            repeating-linear-gradient(-58deg,
+              transparent 0, transparent 18vw,
+              rgba(220,40,140,0.40) 24vw,
+              rgba(220,40,140,0.40) 34vw,
+              transparent 40vw, transparent 56vw) !important;
+          }
+          .beams-near { background-image:
+            repeating-linear-gradient(-52deg,
+              transparent 0, transparent 14vw,
+              rgba(255,70,180,0.60) 19vw,
+              rgba(255,70,180,0.60) 26vw,
+              transparent 31vw, transparent 44vw) !important;
+          }
         }
       `}</style>
     </div>
