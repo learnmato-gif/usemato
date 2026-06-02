@@ -247,6 +247,243 @@ function ScrollProgress() {
 
 const MONO_FONT = "ui-monospace, 'SF Mono', Menlo, 'Roboto Mono', monospace";
 
+/* ─── Beam background — layered, living, cinematic. Reusable with palette. ─── */
+const PINK_PALETTE = {
+  base1: "110,15,70",   base2: "55,8,35",
+  far:   "220,40,140",
+  near:  "255,70,180",
+  bloom1:"255,130,210", bloom2:"255,60,170", bloom3:"170,20,110",
+  ember1:"255,150,220", ember2:"220,80,180",
+};
+const BLUE_PALETTE = {
+  base1: "15,40,110",   base2: "8,18,55",
+  far:   "60,130,220",
+  near:  "90,170,255",
+  bloom1:"150,210,255", bloom2:"60,140,255", bloom3:"20,80,180",
+  ember1:"160,215,255", ember2:"80,160,230",
+};
+
+function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
+  const p = palette;
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: fixed ? "fixed" : "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
+        background: "#000", overflow: "hidden",
+      }}
+    >
+      {/* 1. Deep atmospheric base tint */}
+      <div style={{
+        position: "absolute", inset: "-20%",
+        background:
+          `radial-gradient(ellipse 95% 70% at 50% 22%,` +
+          ` rgba(${p.base1},0.55) 0%,` +
+          ` rgba(${p.base2},0.28) 35%,` +
+          ` transparent 72%)`,
+        filter: "blur(80px)",
+      }} />
+
+      {/* 2. Far beams — wider, softer, drift slow */}
+      <div className="beams-far" style={{
+        position: "absolute", inset: "-25%",
+        background:
+          `repeating-linear-gradient(-58deg,` +
+          ` transparent 0px,` +
+          ` transparent 130px,` +
+          ` rgba(${p.far},0.40) 175px,` +
+          ` rgba(${p.far},0.40) 250px,` +
+          ` transparent 300px,` +
+          ` transparent 430px)`,
+        filter: "blur(34px)",
+        WebkitMaskImage:
+          "radial-gradient(ellipse 80% 70% at 50% 23%, #000 0%, #000 26%, transparent 82%)",
+        maskImage:
+          "radial-gradient(ellipse 80% 70% at 50% 23%, #000 0%, #000 26%, transparent 82%)",
+      }} />
+
+      {/* 3. Near beams — sharper, tighter, drift faster the other way */}
+      <div className="beams-near" style={{
+        position: "absolute", inset: "-15%",
+        background:
+          `repeating-linear-gradient(-52deg,` +
+          ` transparent 0px,` +
+          ` transparent 75px,` +
+          ` rgba(${p.near},0.60) 105px,` +
+          ` rgba(${p.near},0.60) 150px,` +
+          ` transparent 185px,` +
+          ` transparent 270px)`,
+        filter: "blur(16px)",
+        WebkitMaskImage:
+          "radial-gradient(ellipse 72% 60% at 50% 22%, #000 0%, #000 32%, transparent 80%)",
+        maskImage:
+          "radial-gradient(ellipse 72% 60% at 50% 22%, #000 0%, #000 32%, transparent 80%)",
+      }} />
+
+      {/* 4. Hot core bloom */}
+      <div className="bloom" style={{
+        position: "absolute",
+        top: "-12%", left: "50%", transform: "translateX(-50%)",
+        width: "130vw", height: "80vh",
+        background:
+          `radial-gradient(ellipse at 50% 35%,` +
+          ` rgba(${p.bloom1},0.55) 0%,` +
+          ` rgba(${p.bloom2},0.32) 22%,` +
+          ` rgba(${p.bloom3},0.16) 48%,` +
+          ` transparent 70%)`,
+        filter: "blur(70px)",
+        mixBlendMode: "screen",
+      }} />
+
+      {/* 5. Off-center accent glow */}
+      <div className="ember" style={{
+        position: "absolute",
+        top: "5%", left: "42%",
+        width: "32vw", height: "32vw",
+        background:
+          `radial-gradient(circle, rgba(${p.ember1},0.34) 0%, rgba(${p.ember2},0.16) 35%, transparent 60%)`,
+        filter: "blur(55px)",
+        mixBlendMode: "screen",
+      }} />
+
+      {/* 6. Vignette — deepens corners, draws the eye up (soft falloff, no visible ring) */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background:
+          "radial-gradient(ellipse 130% 110% at 50% 30%," +
+          " transparent 0%," +
+          " transparent 45%," +
+          " rgba(0,0,0,0.40) 80%," +
+          " rgba(0,0,0,0.85) 100%)",
+      }} />
+
+      <style>{`
+        @keyframes beamDriftFar {
+          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
+          50%      { transform: translate3d(-32px,8px,0) rotate(0.35deg); }
+        }
+        @keyframes beamDriftNear {
+          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
+          50%      { transform: translate3d(40px,-6px,0) rotate(-0.45deg); }
+        }
+        @keyframes bloomPulse {
+          0%, 100% { opacity: 1;    transform: translateX(-50%) scale(1); }
+          50%      { opacity: 0.82; transform: translateX(-50%) scale(1.06); }
+        }
+        @keyframes emberDrift {
+          0%, 100% { transform: translate3d(0,0,0); opacity: 0.9; }
+          50%      { transform: translate3d(20px,12px,0); opacity: 1; }
+        }
+        .beams-far  { animation: beamDriftFar 32s ease-in-out infinite; }
+        .beams-near { animation: beamDriftNear 20s ease-in-out infinite; }
+        .bloom      { animation: bloomPulse 9s ease-in-out infinite; }
+        .ember      { animation: emberDrift 14s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .beams-far, .beams-near, .bloom, .ember { animation: none; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* ─── Light-mode beam background — blue beams on white ─── */
+function LightBeamBackground() {
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
+        overflow: "hidden",
+      }}
+    >
+      {/* 1. Subtle base wash — very pale sky tint near top */}
+      <div style={{
+        position: "absolute", inset: "-20%",
+        background:
+          "radial-gradient(ellipse 95% 70% at 50% 22%," +
+          " rgba(180,210,255,0.55) 0%," +
+          " rgba(220,235,255,0.30) 35%," +
+          " transparent 72%)",
+        filter: "blur(80px)",
+      }} />
+
+      {/* 2. Far beams — deeper saturated blue, multiply so they tint the white */}
+      <div className="beams-far" style={{
+        position: "absolute", inset: "-25%",
+        background:
+          "repeating-linear-gradient(-58deg," +
+          " transparent 0px," +
+          " transparent 130px," +
+          " rgba(35,90,210,0.32) 175px," +
+          " rgba(35,90,210,0.32) 250px," +
+          " transparent 300px," +
+          " transparent 430px)",
+        filter: "blur(34px)",
+        mixBlendMode: "multiply",
+        WebkitMaskImage:
+          "radial-gradient(ellipse 80% 70% at 50% 23%, #000 0%, #000 26%, transparent 82%)",
+        maskImage:
+          "radial-gradient(ellipse 80% 70% at 50% 23%, #000 0%, #000 26%, transparent 82%)",
+      }} />
+
+      {/* 3. Near beams — tighter, brighter electric blue */}
+      <div className="beams-near" style={{
+        position: "absolute", inset: "-15%",
+        background:
+          "repeating-linear-gradient(-52deg," +
+          " transparent 0px," +
+          " transparent 75px," +
+          " rgba(20,60,180,0.42) 105px," +
+          " rgba(20,60,180,0.42) 150px," +
+          " transparent 185px," +
+          " transparent 270px)",
+        filter: "blur(16px)",
+        mixBlendMode: "multiply",
+        WebkitMaskImage:
+          "radial-gradient(ellipse 72% 60% at 50% 22%, #000 0%, #000 32%, transparent 80%)",
+        maskImage:
+          "radial-gradient(ellipse 72% 60% at 50% 22%, #000 0%, #000 32%, transparent 80%)",
+      }} />
+
+      {/* 4. Soft bloom — sky-blue centre, multiply for tint */}
+      <div className="bloom" style={{
+        position: "absolute",
+        top: "-12%", left: "50%", transform: "translateX(-50%)",
+        width: "130vw", height: "80vh",
+        background:
+          "radial-gradient(ellipse at 50% 35%," +
+          " rgba(80,140,240,0.30) 0%," +
+          " rgba(40,90,200,0.20) 30%," +
+          " transparent 70%)",
+        filter: "blur(70px)",
+        mixBlendMode: "multiply",
+      }} />
+
+      {/* 5. Off-center cyan accent */}
+      <div className="ember" style={{
+        position: "absolute",
+        top: "5%", left: "42%",
+        width: "32vw", height: "32vw",
+        background:
+          "radial-gradient(circle, rgba(90,180,255,0.28) 0%, rgba(60,140,230,0.14) 35%, transparent 60%)",
+        filter: "blur(55px)",
+        mixBlendMode: "multiply",
+      }} />
+
+      {/* 6. White vignette — fades back to pure white at edges so the section feels framed */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background:
+          "radial-gradient(ellipse 130% 110% at 50% 30%," +
+          " transparent 0%," +
+          " transparent 45%," +
+          " rgba(255,255,255,0.35) 80%," +
+          " rgba(255,255,255,0.85) 100%)",
+      }} />
+    </div>
+  );
+}
+
 /* ─── Contact form ─── */
 function ContactForm() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -403,7 +640,7 @@ export default function MatoLanding() {
       minHeight: "100vh",
     }}>
 
-      <InteractiveDotField />
+      <BeamBackground palette={PINK_PALETTE} />
       <ScrollProgress />
 
       {/* ─── NAV ─── */}
