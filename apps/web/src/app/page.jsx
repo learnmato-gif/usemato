@@ -268,22 +268,11 @@ function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
   return (
     <div
       aria-hidden
-      className="beam-bg"
       style={{
         position: fixed ? "fixed" : "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
         background: "#000", overflow: "hidden",
       }}
     >
-      <style>{`
-        @media (max-width: 768px) {
-          .beam-bg {
-            position: absolute !important;
-            top: 0; left: 0; right: 0;
-            height: 100vh;
-            bottom: auto !important;
-          }
-        }
-      `}</style>
       {/* 1. Deep atmospheric base tint */}
       <div style={{
         position: "absolute", inset: "-20%",
@@ -619,7 +608,7 @@ export default function MatoLanding() {
 
   return (
     <div style={{
-      background: "#000",
+      background: "transparent",
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       color: "#fff",
       overflowX: "hidden",

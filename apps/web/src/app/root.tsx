@@ -435,7 +435,7 @@ export function Layout({ children }: { children: ReactNode }) {
     }
   }, [pathname]);
   return (
-    <html lang="en" style={{ background: '#000' }}>
+    <html lang="en" style={{ backgroundColor: '#000' }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
