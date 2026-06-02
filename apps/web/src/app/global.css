@@ -9,6 +9,63 @@
     background-color: #000;
     color: #fff;
   }
+
+  /* ── Hot-pink beam background — on body so no fixed element, no mobile jerk ── */
+  body {
+    background-image:
+      /* vignette — darkens edges */
+      radial-gradient(ellipse 130% 110% at 50% 30%,
+        transparent 0%, transparent 45%,
+        rgba(0,0,0,0.55) 80%, #000 100%),
+      /* off-centre ember glow */
+      radial-gradient(circle at 55% 18%,
+        rgba(255,150,220,0.22) 0%, transparent 45%),
+      /* core bloom */
+      radial-gradient(ellipse 110% 65% at 50% 20%,
+        rgba(255,130,210,0.38) 0%,
+        rgba(255,60,170,0.22) 28%,
+        transparent 65%),
+      /* near beams */
+      repeating-linear-gradient(-52deg,
+        transparent 0,       transparent 5vw,
+        rgba(255,70,180,0.50) 7.5vw, rgba(255,70,180,0.50) 10.5vw,
+        transparent 13vw,    transparent 19vw),
+      /* far beams */
+      repeating-linear-gradient(-58deg,
+        transparent 0,         transparent 9vw,
+        rgba(220,40,140,0.32) 12vw, rgba(220,40,140,0.32) 17vw,
+        transparent 20vw,      transparent 30vw),
+      /* base atmosphere */
+      radial-gradient(ellipse 95% 70% at 50% 22%,
+        rgba(110,15,70,0.50) 0%,
+        rgba(55,8,35,0.25) 35%,
+        transparent 72%);
+    background-attachment: fixed;
+    background-size: cover;
+
+    /* on mobile drop to scroll — no jerk, gradient just sits at top */
+    @media (max-width: 768px) {
+      background-attachment: scroll;
+      background-image:
+        radial-gradient(ellipse 130% 110% at 50% 30%,
+          transparent 0%, transparent 45%,
+          rgba(0,0,0,0.65) 80%, #000 100%),
+        radial-gradient(ellipse 120% 70% at 50% 20%,
+          rgba(255,130,210,0.38) 0%,
+          rgba(255,60,170,0.22) 28%,
+          transparent 65%),
+        repeating-linear-gradient(-52deg,
+          transparent 0,         transparent 14vw,
+          rgba(255,70,180,0.50) 19vw, rgba(255,70,180,0.50) 26vw,
+          transparent 31vw,      transparent 44vw),
+        repeating-linear-gradient(-58deg,
+          transparent 0,         transparent 18vw,
+          rgba(220,40,140,0.32) 24vw, rgba(220,40,140,0.32) 34vw,
+          transparent 40vw,      transparent 56vw),
+        radial-gradient(ellipse 95% 70% at 50% 22%,
+          rgba(110,15,70,0.50) 0%, transparent 72%);
+    }
+  }
   input, textarea, select, button {
     @apply outline-none focus:outline-none;
   }

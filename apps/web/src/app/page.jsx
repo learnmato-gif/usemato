@@ -637,7 +637,6 @@ export default function MatoLanding() {
       minHeight: "100vh",
     }}>
 
-      <BeamBackground palette={PINK_PALETTE} />
       <ScrollProgress />
 
       {/* ─── NAV ─── */}
