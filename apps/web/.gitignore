@@ -1,6 +1,14 @@
 .DS_Store
 /node_modules/
 
+# Env — never commit secrets
+.env
+.env.local
+.env*.local
+
 # React Router
 /.react-router/
 /build/
+
+# Vercel
+/.vercel/

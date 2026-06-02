@@ -1,8 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  html, body, #root {
+    background-color: #000;
+    color: #fff;
+  }
   input, textarea, select, button {
     @apply outline-none focus:outline-none;
   }
