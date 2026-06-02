@@ -362,29 +362,6 @@ function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
       }} />
 
       <style>{`
-        @keyframes beamDriftFar {
-          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
-          50%      { transform: translate3d(-32px,8px,0) rotate(0.35deg); }
-        }
-        @keyframes beamDriftNear {
-          0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
-          50%      { transform: translate3d(40px,-6px,0) rotate(-0.45deg); }
-        }
-        @keyframes bloomPulse {
-          0%, 100% { opacity: 1;    transform: translateX(-50%) scale(1); }
-          50%      { opacity: 0.82; transform: translateX(-50%) scale(1.06); }
-        }
-        @keyframes emberDrift {
-          0%, 100% { transform: translate3d(0,0,0); opacity: 0.9; }
-          50%      { transform: translate3d(20px,12px,0); opacity: 1; }
-        }
-        .beams-far  { animation: beamDriftFar 32s ease-in-out infinite; }
-        .beams-near { animation: beamDriftNear 20s ease-in-out infinite; }
-        .bloom      { animation: bloomPulse 9s ease-in-out infinite; }
-        .ember      { animation: emberDrift 14s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) {
-          .beams-far, .beams-near, .bloom, .ember { animation: none; }
-        }
         @media (max-width: 768px) {
           .beams-far { background-image:
             repeating-linear-gradient(-58deg,
@@ -660,6 +637,7 @@ export default function MatoLanding() {
       minHeight: "100vh",
     }}>
 
+      <BeamBackground palette={PINK_PALETTE} />
       <ScrollProgress />
 
       {/* ─── NAV ─── */}
