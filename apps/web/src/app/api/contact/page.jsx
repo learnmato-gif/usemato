@@ -1,29 +1,15 @@
-import sql from '../utils/sql.js';
+import { neon } from '@neondatabase/serverless';
 import { Resend } from 'resend';
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-
-async function ensureTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS contact_leads (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      name VARCHAR(255) NOT NULL,
-      email VARCHAR(255) NOT NULL,
-      message TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `;
-}
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-export async function POST(request) {
+export async function action({ request }) {
   try {
     const body = await request.json();
-    const name = (body.name || '').trim();
-    const email = (body.email || '').trim().toLowerCase();
+    const name    = (body.name    || '').trim();
+    const email   = (body.email   || '').trim().toLowerCase();
     const message = (body.message || '').trim();
 
     if (!name) {
@@ -37,11 +23,29 @@ export async function POST(request) {
       });
     }
 
-    await ensureTable();
+    const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null;
+    if (!sql) {
+      return new Response(JSON.stringify({ error: 'Database not configured.' }), {
+        status: 500, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS contact_leads (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        message TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     await sql`INSERT INTO contact_leads (name, email, message) VALUES (${name}, ${email}, ${message})`;
 
-    if (resend) {
-      // Notify the Mato team
+    if (process.env.RESEND_API_KEY) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+
+      // Notify the team
       resend.emails.send({
         from: 'Mato Site <hello@usemato.com>',
         to: 'hello@usemato.com',
@@ -62,7 +66,7 @@ export async function POST(request) {
       resend.emails.send({
         from: 'Mato <hello@usemato.com>',
         to: email,
-        subject: "We got your message — Mato",
+        subject: 'We got your message — Mato',
         html: `
           <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:48px 32px;background:#ffffff;">
             <div style="margin-bottom:32px;">
@@ -87,8 +91,9 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('Contact error:', err);
-    return new Response(JSON.stringify({ error: 'Something went wrong. Please try again.', detail: err?.message }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: 'Something went wrong. Please try again.', detail: err?.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }
