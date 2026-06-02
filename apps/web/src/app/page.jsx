@@ -284,36 +284,36 @@ function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
         filter: "blur(80px)",
       }} />
 
-      {/* 2. Far beams — wider, softer, drift slow */}
+      {/* 2. Far beams — vw-based widths so they stay proportional on any screen */}
       <div className="beams-far" style={{
         position: "absolute", inset: "-25%",
         background:
           `repeating-linear-gradient(-58deg,` +
-          ` transparent 0px,` +
-          ` transparent 130px,` +
-          ` rgba(${p.far},0.40) 175px,` +
-          ` rgba(${p.far},0.40) 250px,` +
-          ` transparent 300px,` +
-          ` transparent 430px)`,
-        filter: "blur(34px)",
+          ` transparent 0,` +
+          ` transparent 9vw,` +
+          ` rgba(${p.far},0.40) 12vw,` +
+          ` rgba(${p.far},0.40) 17vw,` +
+          ` transparent 20vw,` +
+          ` transparent 30vw)`,
+        filter: "blur(2.4vw)",
         WebkitMaskImage:
           "radial-gradient(ellipse 80% 70% at 50% 23%, #000 0%, #000 26%, transparent 82%)",
         maskImage:
           "radial-gradient(ellipse 80% 70% at 50% 23%, #000 0%, #000 26%, transparent 82%)",
       }} />
 
-      {/* 3. Near beams — sharper, tighter, drift faster the other way */}
+      {/* 3. Near beams — tighter, sharper, vw-scaled */}
       <div className="beams-near" style={{
         position: "absolute", inset: "-15%",
         background:
           `repeating-linear-gradient(-52deg,` +
-          ` transparent 0px,` +
-          ` transparent 75px,` +
-          ` rgba(${p.near},0.60) 105px,` +
-          ` rgba(${p.near},0.60) 150px,` +
-          ` transparent 185px,` +
-          ` transparent 270px)`,
-        filter: "blur(16px)",
+          ` transparent 0,` +
+          ` transparent 5vw,` +
+          ` rgba(${p.near},0.60) 7.5vw,` +
+          ` rgba(${p.near},0.60) 10.5vw,` +
+          ` transparent 13vw,` +
+          ` transparent 19vw)`,
+        filter: "blur(1.1vw)",
         WebkitMaskImage:
           "radial-gradient(ellipse 72% 60% at 50% 22%, #000 0%, #000 32%, transparent 80%)",
         maskImage:
