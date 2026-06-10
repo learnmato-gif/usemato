@@ -173,8 +173,32 @@ function useInView(rootMargin = "0px 0px -20% 0px") {
   return [ref, v];
 }
 
+/* Editorial serif accent — *word* tokens render in Instrument Serif italic. */
+const SERIF_FONT = "'Instrument Serif', Georgia, 'Times New Roman', serif";
+
+const ACCENT_DARK = {
+  fontFamily: SERIF_FONT,
+  fontStyle: "italic",
+  fontWeight: 400,
+  letterSpacing: "-0.01em",
+  paddingRight: "0.08em",
+};
+
+const ACCENT_LIGHT = {
+  fontFamily: SERIF_FONT,
+  fontStyle: "italic",
+  fontWeight: 400,
+  letterSpacing: "-0.01em",
+  paddingRight: "0.08em",
+};
+
+function splitAccent(raw) {
+  const m = raw.match(/^\*([^*]+)\*(.*)$/);
+  return m ? { word: m[1], suffix: m[2], accent: true } : { word: raw, suffix: "", accent: false };
+}
+
 /* Word-by-word reveal across multiple lines (newline = new line). */
-function Reveal({ text, visible, baseDelay = 0, style }) {
+function Reveal({ text, visible, baseDelay = 0, style, accentStyle = ACCENT_DARK }) {
   const lines = String(text).split("\n");
   let wordIdx = 0;
   return (
@@ -186,6 +210,7 @@ function Reveal({ text, visible, baseDelay = 0, style }) {
             {words.map((w, wi) => {
               const delay = baseDelay + wordIdx * 0.045;
               wordIdx++;
+              const { word, suffix, accent } = splitAccent(w);
               return (
                 <span
                   key={wi}
@@ -197,7 +222,7 @@ function Reveal({ text, visible, baseDelay = 0, style }) {
                     willChange: "transform, opacity",
                   }}
                 >
-                  {w}{wi < words.length - 1 ? " " : ""}
+                  <span style={accent ? accentStyle : undefined}>{word}</span>{suffix}{wi < words.length - 1 ? " " : ""}
                 </span>
               );
             })}
@@ -205,6 +230,350 @@ function Reveal({ text, visible, baseDelay = 0, style }) {
         );
       })}
     </span>
+  );
+}
+
+/* Scroll-scrubbed text — words light up as you scroll through the section. */
+function ScrubText({ text, accentStyle = ACCENT_DARK }) {
+  const ref = useRef(null);
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    function update() {
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const raw = (vh * 0.88 - r.top) / (vh * 0.55 + r.height * 0.55);
+      setP(Math.max(0, Math.min(1, raw)));
+    }
+    function onScroll() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    }
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  const lines = String(text).split("\n");
+  const total = lines.reduce((n, l) => n + l.split(" ").length, 0);
+  let idx = 0;
+  return (
+    <span ref={ref}>
+      {lines.map((line, li) => {
+        const words = line.split(" ");
+        return (
+          <span key={li} style={{ display: "block" }}>
+            {words.map((raw, wi) => {
+              const { word, suffix, accent } = splitAccent(raw);
+              const local = Math.max(0, Math.min(1, p * (total + 3) - idx));
+              idx++;
+              return (
+                <span key={wi} style={{ opacity: 0.13 + 0.87 * local, transition: "opacity 0.2s linear" }}>
+                  <span style={accent ? accentStyle : undefined}>{word}</span>
+                  {suffix}{wi < words.length - 1 ? " " : ""}
+                </span>
+              );
+            })}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+/* Parallax — element drifts vertically against scroll. */
+function useParallax(speed = 0.1) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    function update() {
+      const r = el.getBoundingClientRect();
+      const off = (r.top + r.height / 2 - window.innerHeight / 2) * speed;
+      el.style.transform = `translateY(${off}px)`;
+    }
+    function onScroll() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    }
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [speed]);
+  return ref;
+}
+
+/* Minimal product window — quiet proof of craft. */
+function BrowserMock({ visible }) {
+  const wrapRef = useRef(null);
+  const cardRef = useRef(null);
+  const glareRef = useRef(null);
+  useEffect(() => {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    const w = wrapRef.current, c = cardRef.current, g = glareRef.current;
+    if (!w || !c) return;
+    function onMove(e) {
+      const r = w.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - 0.5;
+      const py = (e.clientY - r.top) / r.height - 0.5;
+      c.style.transition = "transform 0.1s ease-out";
+      c.style.transform = `rotateY(${px * 5}deg) rotateX(${-py * 5}deg)`;
+      if (g) g.style.background = `radial-gradient(circle at ${(px + 0.5) * 100}% ${(py + 0.5) * 100}%, rgba(255,255,255,0.09) 0%, transparent 55%)`;
+    }
+    function onLeave() {
+      c.style.transition = "transform 0.7s cubic-bezier(0.2,0.9,0.2,1)";
+      c.style.transform = "rotateY(0deg) rotateX(0deg)";
+      if (g) g.style.background = "transparent";
+    }
+    w.addEventListener("mousemove", onMove);
+    w.addEventListener("mouseleave", onLeave);
+    return () => {
+      w.removeEventListener("mousemove", onMove);
+      w.removeEventListener("mouseleave", onLeave);
+    };
+  }, []);
+
+  const dot = { width: 8, height: 8, borderRadius: "50%", background: "rgba(255,255,255,0.16)", display: "inline-block" };
+
+  return (
+    <div
+      ref={wrapRef}
+      style={{
+        perspective: 1200,
+        marginBottom: "clamp(30px, 3.5vw, 46px)",
+        opacity: visible ? 1 : 0,
+        transform: `translateY(${visible ? 0 : 22}px)`,
+        transition: "opacity 1s ease 0.35s, transform 1s cubic-bezier(0.2,0.9,0.2,1) 0.35s",
+      }}
+    >
+      <div ref={cardRef} style={{
+        position: "relative",
+        borderRadius: 20,
+        border: "1px solid rgba(255,255,255,0.09)",
+        background: "rgba(0,0,0,0.25)",
+        backdropFilter: "blur(16px) saturate(1.3)",
+        WebkitBackdropFilter: "blur(16px) saturate(1.3)",
+        overflow: "hidden",
+        boxShadow: "0 30px 80px rgba(0,0,0,0.45), inset 0 -4px 22px rgba(255,255,255,0.10)",
+        transformStyle: "preserve-3d",
+        willChange: "transform",
+        maxWidth: 600,
+      }}>
+        {/* window chrome */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 14,
+          padding: "14px 18px",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+        }}>
+          <span style={{ display: "inline-flex", gap: 7 }}>
+            <span style={dot} /><span style={dot} /><span style={dot} />
+          </span>
+          <span style={{
+            flex: 1, textAlign: "center",
+            fontFamily: MONO_FONT, fontSize: 11, letterSpacing: "0.05em",
+            color: "rgba(255,255,255,0.38)",
+          }}>
+            yourstudio.com
+          </span>
+          <span style={{ width: 38 }} />
+        </div>
+        {/* page body — lots of air, one idea */}
+        <div style={{ padding: "clamp(36px, 4.5vw, 56px) clamp(28px, 3.5vw, 44px)", textAlign: "center" }}>
+          <div style={{
+            fontSize: "clamp(24px, 2.7vw, 34px)", fontWeight: 600,
+            letterSpacing: "-0.035em", lineHeight: 1.08, color: "#fff",
+            marginBottom: 14,
+          }}>
+            Designed to be found.
+          </div>
+          <div style={{
+            fontSize: 13.5, lineHeight: 1.6, color: "rgba(255,255,255,0.45)",
+            maxWidth: 320, margin: "0 auto 26px",
+          }}>
+            Fast, structured, and readable by the engines that matter — human and machine.
+          </div>
+          <ChartLine active={visible} />
+        </div>
+        {/* quiet metrics line */}
+        <div style={{
+          padding: "13px 20px",
+          borderTop: "1px solid rgba(255,255,255,0.07)",
+          textAlign: "center",
+          fontFamily: MONO_FONT, fontSize: 10.5, letterSpacing: "0.12em",
+          color: "rgba(255,255,255,0.35)", textTransform: "uppercase",
+        }}>
+          LCP 0.4s&nbsp;&nbsp;·&nbsp;&nbsp;Lighthouse 100&nbsp;&nbsp;·&nbsp;&nbsp;AI-readable
+        </div>
+        <div ref={glareRef} style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
+        <BorderBeam radius={18} size={260} />
+      </div>
+    </div>
+  );
+}
+
+/* Ticking local-time readout for the footer. */
+function LocalTime() {
+  const [t, setT] = useState("--:--:--");
+  useEffect(() => {
+    const f = () => setT(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }));
+    f();
+    const i = setInterval(f, 1000);
+    return () => clearInterval(i);
+  }, []);
+  return <span style={{ fontVariantNumeric: "tabular-nums" }}>{t}</span>;
+}
+
+/* Letter-by-letter reveal — chars rise with blur + rotateX, 19ms stagger. */
+function LetterReveal({ text, visible, baseDelay = 0, accentStyle = ACCENT_DARK }) {
+  const lines = String(text).split("\n");
+  let ch = 0;
+  return (
+    <span className={visible ? "lr-in" : undefined} style={{ display: "block", perspective: 800 }}>
+      {lines.map((line, li) => (
+        <span key={li} style={{ display: "block" }}>
+          {line.split(" ").map((raw, wi) => {
+            const { word, suffix, accent } = splitAccent(raw);
+            return (
+              <span key={wi}>
+                <span style={{ display: "inline-block", whiteSpace: "nowrap" }}>
+                  <span style={accent ? accentStyle : undefined}>
+                    {[...word].map((c, ci) => (
+                      <span key={ci} className="lr-ch" style={{ "--d": baseDelay * 1000 + ch++ * 19 }}>{c}</span>
+                    ))}
+                  </span>
+                  {[...suffix].map((c, ci) => (
+                    <span key={"s" + ci} className="lr-ch" style={{ "--d": baseDelay * 1000 + ch++ * 19 }}>{c}</span>
+                  ))}
+                </span>
+                {wi < line.split(" ").length - 1 ? " " : ""}
+              </span>
+            );
+          })}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/* Light orb that travels an element's border. Parent needs position:relative. */
+function BorderBeam({ radius = 999, size = 90, ring = 1 }) {
+  return (
+    <span
+      className="bb-wrap"
+      aria-hidden
+      style={{ "--bb-radius": `${radius}px`, "--bb-size": `${size}px`, "--bb-ring": `${ring}px` }}
+    >
+      <span className="bb-beam" />
+      <span className="bb-beam bb-beam-2" />
+    </span>
+  );
+}
+
+/* Hero recede — content fades, lifts and shrinks as the page scrolls over it. */
+function useRecede() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    function update() {
+      const vh = window.innerHeight;
+      const p = Math.max(0, Math.min(1, window.scrollY / (vh * 0.85)));
+      el.style.opacity = String(Math.max(0, 1 - p * 1.05));
+      el.style.transform = `translateY(${-p * 7}vh) scale(${1 - p * 0.06})`;
+      el.style.pointerEvents = p > 0.8 ? "none" : "";
+    }
+    function onScroll() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    }
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  return ref;
+}
+
+/* Self-drawing line chart with traveling dot — quiet proof of growth. */
+function ChartLine({ active }) {
+  const pathRef = useRef(null);
+  const dotRef = useRef(null);
+  const badgeRef = useRef(null);
+  const startedRef = useRef(false);
+  useEffect(() => {
+    if (!active || startedRef.current) return;
+    startedRef.current = true;
+    const path = pathRef.current, dot = dotRef.current, badge = badgeRef.current;
+    if (!path) return;
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = String(len);
+    path.style.strokeDashoffset = String(len);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      path.style.strokeDashoffset = "0";
+      const pt = path.getPointAtLength(len);
+      if (dot) { dot.setAttribute("cx", pt.x); dot.setAttribute("cy", pt.y); dot.style.opacity = "1"; }
+      if (badge) badge.style.opacity = "1";
+      return;
+    }
+    let raf = 0;
+    const timer = setTimeout(() => {
+      const dur = 1700, start = performance.now();
+      function step(now) {
+        const t = Math.min(1, (now - start) / dur);
+        const e = 1 - Math.pow(1 - t, 3);
+        path.style.strokeDashoffset = String(len * (1 - e));
+        const pt = path.getPointAtLength(len * e);
+        if (dot) { dot.setAttribute("cx", pt.x); dot.setAttribute("cy", pt.y); dot.style.opacity = "1"; }
+        if (badge && e > 0.55) badge.style.opacity = String(Math.min(1, (e - 0.55) / 0.25));
+        if (t < 1) raf = requestAnimationFrame(step);
+      }
+      raf = requestAnimationFrame(step);
+    }, 800);
+    return () => { clearTimeout(timer); cancelAnimationFrame(raf); };
+  }, [active]);
+
+  return (
+    <div style={{ position: "relative", margin: "30px auto 4px", maxWidth: 380 }}>
+      <svg viewBox="0 0 320 92" style={{ width: "100%", display: "block", overflow: "visible" }} aria-hidden>
+        <path
+          ref={pathRef}
+          d="M4,80 C46,76 70,70 102,57 C138,42 158,45 192,32 C226,20 272,13 316,7"
+          fill="none"
+          stroke="rgba(160,200,255,0.9)"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          style={{ strokeDasharray: 1000, strokeDashoffset: 1000 }}
+        />
+        <circle ref={dotRef} r="3.2" fill="#cfe4ff" style={{ opacity: 0 }} />
+      </svg>
+      <span ref={badgeRef} style={{
+        position: "absolute", right: -4, top: -14,
+        fontFamily: MONO_FONT, fontSize: 10, letterSpacing: "0.08em",
+        color: "rgba(190,220,255,0.95)",
+        border: "1px solid rgba(140,190,255,0.30)",
+        background: "rgba(120,175,255,0.08)",
+        borderRadius: 999, padding: "3px 9px",
+        opacity: 0, transition: "opacity 0.3s ease",
+      }}>+212%</span>
+    </div>
   );
 }
 
@@ -255,6 +624,14 @@ const PINK_PALETTE = {
   bloom1:"255,130,210", bloom2:"255,60,170", bloom3:"170,20,110",
   ember1:"255,150,220", ember2:"220,80,180",
 };
+/* Moonlit steel — cool, desaturated, premium. */
+const STEEL_PALETTE = {
+  base1: "28,42,75",    base2: "12,18,34",
+  far:   "95,130,185",
+  near:  "150,180,225",
+  bloom1:"190,210,240", bloom2:"100,135,195", bloom3:"35,60,115",
+  ember1:"200,220,248", ember2:"120,155,210",
+};
 const BLUE_PALETTE = {
   base1: "15,40,110",   base2: "8,18,55",
   far:   "60,130,220",
@@ -262,6 +639,62 @@ const BLUE_PALETTE = {
   bloom1:"150,210,255", bloom2:"60,140,255", bloom3:"20,80,180",
   ember1:"160,215,255", ember2:"80,160,230",
 };
+
+/* ─── Background — fluted-glass light (public/bg.png), grounded to black ─── */
+function AuroraBackground() {
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
+        background: "#000", overflow: "hidden",
+      }}
+    >
+      <img
+        src="/bg.png"
+        alt=""
+        className="bg-photo"
+        style={{
+          position: "absolute", inset: 0,
+          width: "100%", height: "100%",
+          objectFit: "cover", objectPosition: "center",
+          transformOrigin: "65% 50%",
+          willChange: "transform",
+        }}
+      />
+      {/* legibility — settle the left side where the copy lives */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(105deg, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.22) 38%, rgba(0,0,0,0) 62%)",
+      }} />
+      {/* ground — top eases, bottom falls to black for the section hand-off */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(180deg, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.80) 100%)",
+      }} />
+    </div>
+  );
+}
+
+/* Dashed vertical grid lines — quiet structure on light sections. */
+function GridLines({ dark = false }) {
+  const c = dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.10)";
+  return (
+    <div aria-hidden style={{
+      position: "absolute", inset: 0, pointerEvents: "none",
+      display: "flex", justifyContent: "space-between",
+      maxWidth: 1400, margin: "0 auto",
+      padding: "0 clamp(24px, 5vw, 80px)",
+    }}>
+      {[0, 1, 2, 3].map(i => (
+        <span key={i} style={{
+          width: 1,
+          background: `repeating-linear-gradient(180deg, ${c} 0 4px, transparent 4px 8px)`,
+        }} />
+      ))}
+    </div>
+  );
+}
 
 function BeamBackground({ palette = PINK_PALETTE, fixed = true }) {
   const p = palette;
@@ -545,6 +978,7 @@ function ContactForm() {
         <button
           type="submit"
           disabled={status === "loading"}
+          className="btn-primary"
           style={{
             background: "#fff", color: "#000",
             border: "none", borderRadius: 999,
@@ -579,6 +1013,10 @@ export default function MatoLanding() {
   const navBookRef  = useMagnetic(0.22, 90);
   const ctaBookRef  = useMagnetic(0.12, 240);
 
+  const num01Ref = useParallax(0.10);
+  const num02Ref = useParallax(0.10);
+  const heroRecedeRef = useRecede();
+
   useEffect(() => {
     const t = setTimeout(() => setHeroVisible(true), 220);
     return () => clearTimeout(t);
@@ -586,9 +1024,11 @@ export default function MatoLanding() {
 
   // Detect if the fixed nav is currently over a white section
   const [onLight, setOnLight] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     function check() {
-      const probeY = 36; // nav vertical center
+      setScrolled(window.scrollY > 60);
+      const probeY = 48; // nav pill vertical center
       const refs = [whoRef.current, approachRef.current].filter(Boolean);
       let light = false;
       for (const el of refs) {
@@ -615,14 +1055,26 @@ export default function MatoLanding() {
       minHeight: "100vh",
     }}>
 
-      <BeamBackground palette={PINK_PALETTE} />
+      <AuroraBackground />
       <ScrollProgress />
 
       {/* ─── NAV ─── */}
       <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 300, height: 72,
+        position: "fixed", top: "clamp(14px, 2vw, 22px)", left: "50%",
+        transform: "translateX(-50%)", zIndex: 300,
+        height: "clamp(52px, 4.2vw, 60px)",
+        width: "min(980px, calc(100vw - 28px))",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 clamp(20px, 4vw, 56px)",
+        padding: "0 clamp(8px, 1vw, 10px) 0 clamp(16px, 2vw, 22px)",
+        borderRadius: 16,
+        background: onLight ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.28)",
+        border: onLight ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.08)",
+        boxShadow: onLight
+          ? "inset 0 -4px 22px rgba(255,255,255,0.5), 0 10px 36px rgba(0,0,0,0.10)"
+          : "inset 0 -4px 22px rgba(255,255,255,0.14)",
+        backdropFilter: "blur(18px) saturate(1.4)",
+        WebkitBackdropFilter: "blur(18px) saturate(1.4)",
+        transition: "background 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease",
       }}>
         <a
           href="/"
@@ -670,6 +1122,7 @@ export default function MatoLanding() {
           <a
             ref={navBookRef}
             href="#contact"
+            className="btn-primary"
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               fontSize: 13, fontWeight: 500,
@@ -687,11 +1140,13 @@ export default function MatoLanding() {
         </div>
       </nav>
 
-      {/* ─── HERO ─── */}
-      <section style={{
-        position: "relative", zIndex: 1, minHeight: "100vh",
+      {/* ─── HERO — pinned curtain; recedes as the page scrolls over it ─── */}
+      <div style={{ height: "168vh", position: "relative", zIndex: 0 }}>
+      <section ref={heroRecedeRef} style={{
+        position: "sticky", top: 0, zIndex: 0, minHeight: "100vh",
+        willChange: "transform, opacity",
         display: "flex", flexDirection: "column", justifyContent: "flex-end",
-        padding: "120px clamp(24px, 5vw, 80px) clamp(60px, 8vw, 110px)",
+        padding: "120px clamp(24px, 5vw, 80px) clamp(80px, 10vw, 140px)",
       }}>
         <div style={{
           position: "absolute",
@@ -710,7 +1165,7 @@ export default function MatoLanding() {
           lineHeight: 0.86, color: "#fff",
           margin: 0,
         }}>
-          <Reveal text={"Built for\nthe AI-first\nweb."} visible={heroVisible} baseDelay={0.15} />
+          <LetterReveal text={"Built for\nthe *AI-first*\nweb."} visible={heroVisible} baseDelay={0.1} />
         </h1>
 
         <div className="hero-foot" style={{
@@ -740,6 +1195,7 @@ export default function MatoLanding() {
             <a
               ref={heroBookRef}
               href="#contact"
+              className="btn-primary"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
                 fontSize: 15, fontWeight: 500, color: "#000", background: "#fff",
@@ -761,19 +1217,22 @@ export default function MatoLanding() {
                 borderRadius: 999, padding: "15px 28px", textDecoration: "none",
                 letterSpacing: "-0.01em",
                 transition: "color 0.2s, border-color 0.2s",
+                position: "relative", isolation: "isolate",
               }}
             >
+              <BorderBeam size={70} />
               See the work <span style={{ fontSize: 14 }}>↓</span>
             </a>
           </div>
         </div>
       </section>
+      </div>
 
       {/* ─── MANIFESTO ─── */}
       <section ref={manifestoRef} style={{
         position: "relative", zIndex: 1, minHeight: "100vh",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        padding: "clamp(80px, 14vw, 180px) clamp(24px, 5vw, 80px)",
+        padding: "clamp(120px, 16vw, 220px) clamp(24px, 5vw, 80px)",
         textAlign: "center",
         borderTop: "1px solid rgba(255,255,255,0.06)",
       }}>
@@ -791,7 +1250,7 @@ export default function MatoLanding() {
           lineHeight: 0.95, color: "#fff",
           margin: 0, maxWidth: 1400,
         }}>
-          <Reveal text={"Most sites talk\nto humans.\nOurs talk\nto machines, too."} visible={manifestoIn} baseDelay={0.05} />
+          <ScrubText text={"Most sites talk\nto humans.\nOurs talk\nto *machines*, too."} />
         </h2>
       </section>
 
@@ -799,8 +1258,12 @@ export default function MatoLanding() {
       <section ref={whoRef} style={{
         position: "relative", zIndex: 2,
         background: "#fff", color: "#0a0a0a",
-        padding: "clamp(100px, 14vw, 200px) clamp(24px, 5vw, 80px)",
+        padding: "clamp(110px, 15vw, 210px) clamp(24px, 5vw, 80px)",
+        borderRadius: "clamp(20px, 3vw, 36px) clamp(20px, 3vw, 36px) 0 0",
+        boxShadow: "0 -24px 70px rgba(0,0,0,0.45)",
+        overflow: "hidden",
       }}>
+        <GridLines />
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
           <div style={{
             fontSize: 11, fontWeight: 500, letterSpacing: "0.2em", textTransform: "uppercase",
@@ -816,7 +1279,7 @@ export default function MatoLanding() {
             lineHeight: 0.95, color: "#0a0a0a",
             margin: "0 0 clamp(20px, 2.5vw, 36px)", maxWidth: 1300,
           }}>
-            <Reveal text={"Built for the people\nwho actually ship."} visible={whoIn} baseDelay={0.05} />
+            <Reveal text={"Built for the people\nwho actually ship."} visible={whoIn} baseDelay={0.05} accentStyle={ACCENT_LIGHT} />
           </h2>
           <p style={{
             fontSize: "clamp(16px, 1.6vw, 21px)", lineHeight: 1.55,
@@ -862,7 +1325,7 @@ export default function MatoLanding() {
           gap: "clamp(40px, 6vw, 100px)",
           borderTop: "1px solid rgba(255,255,255,0.08)",
         }}>
-          <div aria-hidden style={{
+          <div aria-hidden ref={num01Ref} style={{
             position: "absolute", top: "clamp(30px, 4vw, 60px)", right: "-3vw",
             fontSize: "clamp(220px, 40vw, 600px)",
             fontWeight: 700, letterSpacing: "-0.06em",
@@ -896,6 +1359,7 @@ export default function MatoLanding() {
             transform: `translateY(${websitesIn ? 0 : 14}px)`,
             transition: "opacity 0.9s ease 0.55s, transform 0.9s cubic-bezier(0.2,0.9,0.2,1) 0.55s",
           }}>
+            <BrowserMock visible={websitesIn} />
             <p style={{
               fontSize: "clamp(17px, 1.6vw, 21px)", lineHeight: 1.55,
               color: "rgba(255,255,255,0.6)", margin: 0, maxWidth: 520, fontWeight: 400,
@@ -933,7 +1397,7 @@ export default function MatoLanding() {
           gap: "clamp(40px, 6vw, 100px)",
           borderTop: "1px solid rgba(255,255,255,0.08)",
         }}>
-          <div aria-hidden style={{
+          <div aria-hidden ref={num02Ref} style={{
             position: "absolute", top: "clamp(30px, 4vw, 60px)", left: "-3vw",
             fontSize: "clamp(220px, 40vw, 600px)",
             fontWeight: 700, letterSpacing: "-0.06em",
@@ -998,8 +1462,12 @@ export default function MatoLanding() {
       <section ref={approachRef} style={{
         position: "relative", zIndex: 2,
         background: "#fff", color: "#0a0a0a",
-        padding: "clamp(100px, 14vw, 200px) clamp(24px, 5vw, 80px)",
+        padding: "clamp(110px, 15vw, 210px) clamp(24px, 5vw, 80px)",
+        borderRadius: "clamp(20px, 3vw, 36px) clamp(20px, 3vw, 36px) 0 0",
+        boxShadow: "0 -24px 70px rgba(0,0,0,0.45)",
+        overflow: "hidden",
       }}>
+        <GridLines />
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
           <div style={{
             fontSize: 11, fontWeight: 500, letterSpacing: "0.2em", textTransform: "uppercase",
@@ -1015,7 +1483,7 @@ export default function MatoLanding() {
             lineHeight: 0.95, color: "#0a0a0a",
             margin: "0 0 clamp(8px, 1.2vw, 16px)", maxWidth: 1300,
           }}>
-            <Reveal text={"Ship in weeks.\nNot quarters."} visible={approachIn} baseDelay={0.05} />
+            <Reveal text={"Ship in weeks.\nNot quarters."} visible={approachIn} baseDelay={0.05} accentStyle={ACCENT_LIGHT} />
           </h2>
           <p style={{
             fontSize: "clamp(16px, 1.6vw, 21px)", lineHeight: 1.55,
@@ -1095,6 +1563,13 @@ export default function MatoLanding() {
                 opacity: processIn ? 1 : 0,
                 transform: `translateY(${processIn ? 0 : 18}px)`,
                 transition: `opacity 0.9s ease ${0.2 + i * 0.12}s, transform 0.9s cubic-bezier(0.2,0.9,0.2,1) ${0.2 + i * 0.12}s`,
+                background: "rgba(0,0,0,0.22)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 20,
+                padding: "clamp(28px, 3vw, 40px)",
+                boxShadow: "inset 0 -4px 22px rgba(255,255,255,0.07)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
               }}>
                 <span style={{
                   display: "block", fontSize: 12, fontWeight: 500,
@@ -1147,7 +1622,7 @@ export default function MatoLanding() {
             willChange: "transform",
           }}
         >
-          <Reveal text={"Let's build."} visible={ctaIn} baseDelay={0.15} />
+          <LetterReveal text={"Let's *build*."} visible={ctaIn} baseDelay={0.1} />
         </div>
 
         <div style={{
@@ -1155,9 +1630,39 @@ export default function MatoLanding() {
           transform: `translateY(${ctaIn ? 0 : 20}px)`,
           transition: "opacity 0.9s ease 0.9s, transform 0.9s cubic-bezier(0.2,0.9,0.2,1) 0.9s",
         }}>
-          <ContactForm />
+          <div style={{
+            maxWidth: 620, margin: "0 auto",
+            position: "relative", isolation: "isolate",
+            borderRadius: 24,
+            border: "1px solid rgba(255,255,255,0.09)",
+            background: "rgba(0,0,0,0.25)",
+            boxShadow: "inset 0 -4px 22px rgba(255,255,255,0.10)",
+            backdropFilter: "blur(16px) saturate(1.3)",
+            WebkitBackdropFilter: "blur(16px) saturate(1.3)",
+            padding: "clamp(28px, 4vw, 48px)",
+          }}>
+            <BorderBeam radius={24} size={200} />
+            <ContactForm />
+          </div>
         </div>
       </section>
+
+      {/* ─── GIANT WORDMARK ─── */}
+      <div aria-hidden style={{
+        position: "relative", zIndex: 2, overflow: "hidden",
+        textAlign: "center", lineHeight: 0.76, userSelect: "none",
+        padding: "clamp(30px, 5vw, 60px) 0 0",
+      }}>
+        <div style={{
+          fontFamily: "'Poppins', sans-serif", fontWeight: 800,
+          fontSize: "clamp(120px, 27vw, 460px)", letterSpacing: "-0.04em",
+          color: "transparent",
+          WebkitTextStroke: "1.5px rgba(255,255,255,0.15)",
+          transform: "translateY(0.16em)",
+          WebkitMaskImage: "linear-gradient(#000 20%, transparent 96%)",
+          maskImage: "linear-gradient(#000 20%, transparent 96%)",
+        }}>mato</div>
+      </div>
 
       {/* ─── FOOTER ─── */}
       <footer style={{
@@ -1179,6 +1684,8 @@ export default function MatoLanding() {
             style={{ width: 14, height: 14, objectFit: "contain", opacity: 0.7 }}
           />
           Mato © 2026
+          <span style={{ opacity: 0.5 }}>·</span>
+          Local time <LocalTime />
         </div>
         <div style={{ display: "flex", gap: "clamp(16px, 2.5vw, 28px)", flexWrap: "wrap" }}>
           {[
@@ -1215,6 +1722,9 @@ export default function MatoLanding() {
         .ghost-btn:hover { color: #fff !important; border-color: rgba(255,255,255,0.42) !important; }
         .foot-link:hover { color: #fff !important; }
         .cta-mega:hover .cta-arrow { transform: translate(0.12em, -0.14em); }
+
+        .btn-primary { transition: box-shadow 0.35s ease !important; }
+        .btn-primary:hover { box-shadow: 0 0 0 3px rgba(255,255,255,0.18), 0 6px 30px rgba(255,255,255,0.16); }
 
         @media (max-width: 880px) {
           .service-grid {

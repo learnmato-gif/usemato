@@ -1,8 +1,103 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Letter reveal (Lumio-style) ─── */
+.lr-ch {
+  display: inline-block;
+  opacity: 0;
+  will-change: transform, filter, opacity;
+}
+.lr-in .lr-ch {
+  animation: lrUp 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: calc(var(--d) * 1ms);
+}
+@keyframes lrUp {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(0.85em) rotateX(-65deg) scale(0.92);
+  }
+  55% {
+    opacity: 1;
+    filter: blur(3px);
+    transform: translateY(0.06em) rotateX(-6deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) rotateX(0) scale(1);
+  }
+}
+
+/* ─── Border beam — light orb travels the element's border ─── */
+.bb-wrap {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: var(--bb-ring, 1px);
+  box-sizing: border-box;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.bb-beam {
+  position: absolute;
+  aspect-ratio: 1;
+  width: var(--bb-size, 90px);
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.7) 6%,
+    rgba(255, 255, 255, 0.3) 18%,
+    rgba(255, 255, 255, 0.1) 32%,
+    rgba(255, 255, 255, 0) 50%
+  );
+  filter: blur(0.6px);
+  offset-path: rect(0 auto auto 0 round var(--bb-radius, 999px));
+  offset-distance: 0%;
+  offset-rotate: 0deg;
+  animation: bbTravel 7s linear infinite;
+}
+.bb-beam-2 {
+  animation-delay: -3.5s;
+}
+@keyframes bbTravel {
+  to {
+    offset-distance: 100%;
+  }
+}
+
+/* Background breathes — slow zoom toward the glow */
+@keyframes bgBreathe {
+  from { transform: scale(1.02); }
+  to { transform: scale(1.10); }
+}
+.bg-photo {
+  animation: bgBreathe 36s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-photo {
+    animation: none;
+  }
+  .bb-beam {
+    animation: none;
+    display: none;
+  }
+  .lr-ch,
+  .lr-in .lr-ch {
+    animation: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
 
 @layer base {
   html, body, #root {
